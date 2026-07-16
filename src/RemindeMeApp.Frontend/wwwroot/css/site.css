@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block');
+
+:root {
+  --surface-container-low: #131b2e;
+  --secondary-fixed-dim: #b9c8de;
+  --outline: #8c909f;
+  --on-secondary-fixed-variant: #39485a;
+  --tertiary-container: #df7412;
+  --tertiary-fixed-dim: #ffb786;
+  --secondary-fixed: #d4e4fa;
+  --text-secondary: #94a3b8;
+  --on-surface-variant: #c2c6d6;
+  --inverse-on-surface: #283044;
+  --surface-bright: #31394d;
+  --on-error: #690005;
+  --tertiary: #ffb786;
+  --tertiary-fixed: #ffdcc6;
+  --on-tertiary-fixed: #311400;
+  --secondary-container: #39485a;
+  --on-tertiary-fixed-variant: #723600;
+  --on-secondary-fixed: #0d1c2d;
+  --surface-container: #171f33;
+  --tag-personal: #22c55e;
+  --background: #0b1326;
+  --on-secondary: #233143;
+  --primary: #adc6ff;
+  --inverse-primary: #005ac2;
+  --on-surface: #dae2fd;
+  --surface-container-high: #222a3d;
+  --surface-variant: #2d3449;
+  --on-error-container: #ffdad6;
+  --on-primary-container: #00285d;
+  --on-secondary-container: #a7b6cc;
+  --surface: #0b1326;
+  --error: #ffb4ab;
+  --on-primary: #002e6a;
+  --primary-fixed-dim: #adc6ff;
+  --surface-dim: #0b1326;
+  --on-primary-fixed: #001a42;
+  --on-tertiary: #502400;
+  --surface-tint: #adc6ff;
+  --tag-work: #3b82f6;
+  --tag-urgent: #ef4444;
+  --outline-variant: #424754;
+  --inverse-surface: #dae2fd;
+  --surface-container-lowest: #060e20;
+  --border-subtle: #334155;
+  --on-primary-fixed-variant: #004395;
+  --error-container: #93000a;
+  --primary-fixed: #d8e2ff;
+  --surface-container-highest: #2d3449;
+  --primary-container: #4d8eff;
+  --surface-charcoal: #1e293b;
+  --on-background: #dae2fd;
+  --on-tertiary-container: #461f00;
+  --secondary: #b9c8de;
+
+  --font-headline-md: 'Inter', sans-serif;
+  --font-display: 'Inter', sans-serif;
+  --font-body-md: 'Inter', sans-serif;
+  --font-body-lg: 'Inter', sans-serif;
+  --font-caption: 'Inter', sans-serif;
+  --font-headline-lg: 'Inter', sans-serif;
+  --font-label-md: 'JetBrains Mono', monospace;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--on-background);
+  font-family: var(--font-body-md);
+}
+
+/* Base resets to work smoothly with Tailwind CDN later */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}

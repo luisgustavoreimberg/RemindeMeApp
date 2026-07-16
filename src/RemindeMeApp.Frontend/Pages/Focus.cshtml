@@ -1,0 +1,183 @@
+@page
+@model FocusModel
+@{
+    ViewData["Title"] = "Focus Mode";
+}
+
+<!-- Focus Mode Canvas -->
+<div class="flex-1 overflow-y-auto p-container-margin relative h-full">
+    <!-- Ambient Background Effect -->
+    <div class="absolute inset-0 z-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/30 via-background to-background"></div>
+    
+    <div class="max-w-4xl mx-auto h-full flex flex-col justify-center items-center z-10 relative space-y-12 mt-12">
+        <!-- Context Linker -->
+        <div class="w-full max-w-md">
+            <label class="block text-label-md font-label-md text-text-secondary mb-2 text-center uppercase tracking-wider">Working On</label>
+            <div class="relative">
+                <select id="task-select" asp-for="SelectedTaskId" class="w-full bg-surface-charcoal border border-border-subtle rounded-lg px-4 py-3 text-body-lg font-body-lg text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-center">
+                    <option value="">Select a task...</option>
+                    @foreach (var task in Model.ActiveTasks)
+                    {
+                        <option value="@task.Id">@task.Titulo</option>
+                    }
+                </select>
+                <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <span class="w-2.5 h-2.5 rounded-full bg-tag-work block"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Timer Area -->
+        <div class="glass-panel p-12 rounded-3xl flex flex-col items-center justify-center relative w-full max-w-lg shadow-2xl shadow-primary/5 border border-border-subtle bg-surface-container/50 backdrop-blur-sm">
+            <!-- Mode Toggle -->
+            <div class="absolute top-6 flex bg-surface-container rounded-full p-1 border border-border-subtle">
+                <button class="px-4 py-1.5 rounded-full text-label-md font-label-md bg-surface-variant text-on-surface transition-all">Timer</button>
+                <button class="px-4 py-1.5 rounded-full text-label-md font-label-md text-text-secondary hover:text-on-surface transition-all">Pomodoro</button>
+            </div>
+            
+            <!-- Time Display -->
+            <div id="clock-display" class="text-[120px] leading-none font-timer font-bold text-on-surface tracking-tighter mt-12 mb-8 drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-b from-white to-on-surface-variant">
+                00:00
+            </div>
+            
+            <!-- Controls -->
+            <div class="flex items-center gap-6">
+                <button onclick="stopTimer()" class="w-14 h-14 rounded-full border border-border-subtle flex items-center justify-center text-text-secondary hover:bg-surface-variant hover:text-on-surface transition-all">
+                    <span class="material-symbols-outlined text-2xl">stop</span>
+                </button>
+                <button id="play-pause-btn" onclick="toggleTimer()" class="w-20 h-20 rounded-full bg-primary text-on-primary-container flex items-center justify-center hover:bg-primary-container transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20">
+                    <span class="material-symbols-outlined text-4xl" id="play-icon" style="font-variation-settings: 'FILL' 1;">@(Model.ActiveSession != null ? "pause" : "play_arrow")</span>
+                </button>
+                <button class="w-14 h-14 rounded-full border border-border-subtle flex items-center justify-center text-text-secondary hover:bg-surface-variant hover:text-on-surface transition-all">
+                    <span class="material-symbols-outlined text-2xl">skip_next</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Settings Grid -->
+        <div class="grid grid-cols-2 gap-4 w-full max-w-md">
+            <div class="bg-surface-charcoal border border-border-subtle rounded-xl p-4 flex flex-col items-center hover:border-primary/50 transition-colors group cursor-pointer">
+                <span class="text-caption font-caption text-text-secondary mb-1">Focus Time</span>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-headline-lg font-headline-lg text-on-surface group-hover:text-primary transition-colors">25</span>
+                    <span class="text-body-md font-body-md text-text-secondary">min</span>
+                </div>
+            </div>
+            <div class="bg-surface-charcoal border border-border-subtle rounded-xl p-4 flex flex-col items-center hover:border-primary/50 transition-colors group cursor-pointer">
+                <span class="text-caption font-caption text-text-secondary mb-1">Break Time</span>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-headline-lg font-headline-lg text-on-surface group-hover:text-primary transition-colors">05</span>
+                    <span class="text-body-md font-body-md text-text-secondary">min</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let isRunning = @(Model.ActiveSession != null ? "true" : "false");
+        let syncInterval;
+
+        function formatTime(totalSeconds) {
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            
+            if (h > 0) {
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        async function syncClock() {
+            try {
+                const response = await fetchWithAntiForgery('?handler=UpdateClock');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.isActive) {
+                        document.getElementById('clock-display').textContent = formatTime(data.elapsedSeconds);
+                        isRunning = true;
+                        document.getElementById('play-icon').textContent = 'pause';
+                    } else {
+                        isRunning = false;
+                        document.getElementById('play-icon').textContent = 'play_arrow';
+                        if(syncInterval) clearInterval(syncInterval);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to sync clock", e);
+            }
+        }
+
+        async function toggleTimer() {
+            const taskId = document.getElementById('task-select').value;
+            if (!taskId && !isRunning) {
+                alert("Please select a task first.");
+                return;
+            }
+
+            if (isRunning) {
+                // For simplicity here we just stop it when paused, but a real app would support pause
+                await stopTimer();
+            } else {
+                try {
+                    const response = await fetchWithAntiForgery(`?handler=StartTimer&taskId=${taskId}`, { method: 'POST' });
+                    if (response.ok) {
+                        isRunning = true;
+                        document.getElementById('play-icon').textContent = 'pause';
+                        syncInterval = setInterval(syncClock, 1000);
+                        syncClock();
+                    }
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        async function stopTimer() {
+            try {
+                const response = await fetchWithAntiForgery(`?handler=StopTimer`, { method: 'POST' });
+                if (response.ok) {
+                    isRunning = false;
+                    document.getElementById('play-icon').textContent = 'play_arrow';
+                    if(syncInterval) clearInterval(syncInterval);
+                    document.getElementById('clock-display').textContent = "00:00";
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        if (isRunning) {
+            syncInterval = setInterval(syncClock, 1000);
+            syncClock();
+        }
+
+        // Ambient interaction
+        const timerContainer = document.querySelector('.glass-panel');
+        if(timerContainer) {
+            document.addEventListener('mousemove', (e) => {
+                const { clientX, clientY } = e;
+                const { left, top, width, height } = timerContainer.getBoundingClientRect();
+                const centerX = left + width / 2;
+                const centerY = top + height / 2;
+                
+                const deltaX = (clientX - centerX) / 40;
+                const deltaY = (clientY - centerY) / 40;
+                
+                timerContainer.style.transform = `perspective(1000px) rotateY(${deltaX}deg) rotateX(${-deltaY}deg)`;
+            });
+
+            timerContainer.addEventListener('mouseleave', () => {
+                timerContainer.style.transform = `perspective(1000px) rotateY(0deg) rotateX(0deg)`;
+                timerContainer.style.transition = 'transform 0.5s ease';
+            });
+            
+            timerContainer.addEventListener('mouseenter', () => {
+                timerContainer.style.transition = 'none';
+            });
+        }
+    </script>
+}

@@ -1,0 +1,145 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Header for Main Area -->
+<div class="px-8 py-6 border-b border-border-subtle bg-surface-charcoal/40 backdrop-blur-md sticky top-0 z-10 flex justify-between items-center">
+    <div>
+        <h1 class="text-display font-display text-on-surface">Today's Tasks</h1>
+        <p class="text-body-md font-body-md text-text-secondary mt-1">@DateTime.Now.ToString("dddd, MMMM dd")</p>
+    </div>
+    <div class="flex gap-2">
+        <button class="p-2 rounded-md border border-border-subtle text-on-surface-variant hover:bg-surface-variant/50 transition-colors">
+            <span class="material-symbols-outlined">filter_list</span>
+        </button>
+        <button class="p-2 rounded-md border border-border-subtle text-on-surface-variant hover:bg-surface-variant/50 transition-colors">
+            <span class="material-symbols-outlined">sort</span>
+        </button>
+    </div>
+</div>
+
+<!-- Task List Scrollable Area -->
+<div class="flex-1 overflow-y-auto p-8 space-y-4" id="task-container">
+    @foreach (var task in Model.Tasks)
+    {
+        var isCompletedClass = task.IsAtivo ? "" : "opacity-70 hover:opacity-100";
+        var borderColor = task.IsAtivo ? "border-primary/30 hover:border-primary/50" : "border-border-subtle/50";
+        var icon = task.IsAtivo ? "radio_button_unchecked" : "check_circle";
+        var textStyle = task.IsAtivo ? "text-on-surface font-medium" : "text-text-secondary line-through";
+
+        <div class="group bg-surface-charcoal border @borderColor rounded-lg p-0 flex flex-col shadow-lg shadow-primary/5 transition-all relative overflow-hidden @isCompletedClass">
+            @if (task.IsAtivo)
+            {
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+            }
+            <div class="flex items-center p-4 gap-4">
+                <button class="text-outline hover:text-primary transition-colors focus:outline-none" onclick="toggleTaskCompletion(@task.Id)">
+                    <span class="material-symbols-outlined text-2xl" id="check-icon-@task.Id">@icon</span>
+                </button>
+                <div class="flex-1 flex flex-col cursor-pointer" onclick="toggleSubtasks('task-@task.Id')">
+                    <span class="text-body-lg font-body-lg @textStyle" id="task-text-@task.Id">@task.Titulo</span>
+                    <div class="flex items-center gap-3 mt-2">
+                        @if (task.Tag != null)
+                        {
+                            <span class="px-2 py-0.5 rounded text-caption font-caption bg-tag-work/15 border border-tag-work/30 text-tag-work">@task.Tag.Nome</span>
+                        }
+                        @if (task.DataHoraLembrete.HasValue)
+                        {
+                            <div class="flex items-center gap-1 text-text-secondary text-caption font-caption">
+                                <span class="material-symbols-outlined text-[14px]">schedule</span>
+                                <span>Due @task.DataHoraLembrete.Value.ToString("t")</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 bg-surface-container-highest px-3 py-1.5 rounded-md border border-border-subtle opacity-60 group-hover:opacity-100 transition-opacity">
+                        <span class="text-label-md font-label-md text-text-secondary tabular-nums">@TimeSpan.FromSeconds(task.TempoTotalGastoSegundos).ToString(@"hh\:mm\:ss")</span>
+                        <a href="/Focus" class="text-text-secondary hover:text-primary transition-colors flex items-center">
+                            <span class="material-symbols-outlined">play_circle</span>
+                        </a>
+                    </div>
+                    @if (task.Subtasks.Any())
+                    {
+                        <button class="text-on-surface-variant hover:text-on-surface transition-colors transform group-hover:rotate-180 duration-300" onclick="toggleSubtasks('task-@task.Id')">
+                            <span class="material-symbols-outlined" id="icon-task-@task.Id">expand_more</span>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Subtasks (Collapsed by default) -->
+            @if (task.Subtasks.Any())
+            {
+                <div class="bg-surface-container-low border-t border-border-subtle p-4 pl-12 space-y-3 hidden" id="task-@task.Id-subtasks">
+                    @foreach(var sub in task.Subtasks)
+                    {
+                        <div class="flex items-center gap-3">
+                            <button class="text-outline hover:text-primary transition-colors focus:outline-none">
+                                <span class="material-symbols-outlined text-xl">@(sub.IsAtivo ? "radio_button_unchecked" : "check_circle")</span>
+                            </button>
+                            <span class="text-body-md font-body-md @(sub.IsAtivo ? "text-on-surface-variant" : "text-text-secondary line-through")">@sub.Titulo</span>
+                        </div>
+                    }
+                    <div class="flex items-center gap-3 mt-2">
+                        <button class="text-text-secondary hover:text-primary text-body-md font-body-md flex items-center gap-1 transition-colors">
+                            <span class="material-symbols-outlined text-sm">add</span> Add subtask
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Spacer for bottom input -->
+    <div class="h-24"></div>
+</div>
+
+<!-- Quick Add Footer -->
+<div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background via-background/90 to-transparent pt-12">
+    <form method="post" asp-page-handler="QuickAdd" class="bg-surface-charcoal border border-border-subtle rounded-xl shadow-2xl flex items-center p-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+        <span class="material-symbols-outlined text-on-surface-variant pl-2">add</span>
+        <input asp-for="NewTaskTitle" class="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-text-secondary px-4 py-2 outline-none" placeholder="Quick add task... (Press Enter)" type="text">
+        <div class="flex items-center gap-2 pr-2">
+            <button type="button" class="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Set Time">
+                <span class="material-symbols-outlined text-sm">schedule</span>
+            </button>
+            <button type="button" class="p-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Add Tag">
+                <span class="material-symbols-outlined text-sm">sell</span>
+            </button>
+        </div>
+        <!-- Hide actual submit button, allow enter to submit -->
+        <button type="submit" class="hidden"></button>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        async function toggleTaskCompletion(id) {
+            try {
+                const response = await fetchWithAntiForgery(`?handler=ToggleTask&id=${id}`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    // Simple reload for now, but UI should ideally handle this purely client side for speed
+                    // or just swap the icon class
+                    const icon = document.getElementById(`check-icon-${id}`);
+                    const text = document.getElementById(`task-text-${id}`);
+                    if (icon.textContent === 'radio_button_unchecked') {
+                        icon.textContent = 'check_circle';
+                        text.classList.remove('text-on-surface', 'font-medium');
+                        text.classList.add('text-text-secondary', 'line-through');
+                    } else {
+                        icon.textContent = 'radio_button_unchecked';
+                        text.classList.add('text-on-surface', 'font-medium');
+                        text.classList.remove('text-text-secondary', 'line-through');
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to toggle task", e);
+            }
+        }
+    </script>
+}
