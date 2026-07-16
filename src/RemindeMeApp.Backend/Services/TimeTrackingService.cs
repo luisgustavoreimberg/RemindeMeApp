@@ -142,4 +142,29 @@ public class TimeTrackingService : ITimeTrackerService, IPomodoroService
     {
         await StopTrackingAsync(sessionId);
     }
+
+    public async Task PauseTrackingAsync(int sessionId)
+    {
+        var session = await _dbContext.TimerSessions.FindAsync(sessionId);
+        if (session != null && !session.IsPaused)
+        {
+            session.IsPaused = true;
+            session.PausedElapsedSeconds = (int)(_timeProvider.GetUtcNow().UtcDateTime - session.StartTime).TotalSeconds;
+            _dbContext.TimerSessions.Update(session);
+            await _dbContext.SaveChangesAsync();
+        }
+    }
+
+    public async Task ResumeTrackingAsync(int sessionId)
+    {
+        var session = await _dbContext.TimerSessions.FindAsync(sessionId);
+        if (session != null && session.IsPaused)
+        {
+            session.IsPaused = false;
+            session.StartTime = _timeProvider.GetUtcNow().UtcDateTime.AddSeconds(-session.PausedElapsedSeconds);
+            session.PausedElapsedSeconds = 0;
+            _dbContext.TimerSessions.Update(session);
+            await _dbContext.SaveChangesAsync();
+        }
+    }
 }

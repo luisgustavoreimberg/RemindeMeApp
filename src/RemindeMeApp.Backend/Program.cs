@@ -78,6 +78,13 @@ class Program
         app.UseRouting();
         app.MapRazorPages();
 
+        // Run migrations
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.Migrate();
+        }
+
         // 3. Start ASP.NET Core
         app.StartAsync().Wait();
 

@@ -27,4 +27,14 @@ public interface ITimeTrackerService
     /// Adds manual time to a task or subtask.
     /// </summary>
     Task AddManualTimeAsync(int referenceId, bool isSubtask, int secondsToAdd);
+
+    /// <summary>
+    /// Pauses an active session.
+    /// </summary>
+    Task PauseTrackingAsync(int sessionId);
+
+    /// <summary>
+    /// Resumes a paused session.
+    /// </summary>
+    Task ResumeTrackingAsync(int sessionId);
 }

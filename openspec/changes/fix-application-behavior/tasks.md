@@ -16,10 +16,10 @@
 - [x] 3.6 Update the dashboard task list to render subtasks hierarchically under their parent tasks.
 
 ## 4. Focus Mode Mechanics
-- [ ] 4.1 Update CSS for the time panel's glass div to remove hover movement/animations.
-- [ ] 4.2 Fix the duplicated task selection field (remove duplicate arrows/fields) in the Focus Mode UI.
-- [ ] 4.3 Create configuration modal for "Focus Time" and "Break Time".
-- [ ] 4.4 Hook up the "Focus Time" and "Break Time" buttons to open the new configuration modal.
-- [ ] 4.5 Fix timer state logic so the timer increments from 00:00 (or decrements from a positive value) instead of showing negative numbers.
-- [ ] 4.6 Fix pause button logic to persist current timer state instead of resetting it.
-- [ ] 4.7 Hook up the "Pomodoro" button to initiate the configured Focus and Break time sequence.
+- [x] 4.1 Update CSS for the time panel's glass div to remove hover movement/animations.
+- [x] 4.2 Fix the duplicated task selection field (remove duplicate arrows/fields) in the Focus Mode UI.
+- [x] 4.3 Create configuration modal for "Focus Time" and "Break Time".
+- [x] 4.4 Hook up the "Focus Time" and "Break Time" buttons to open the new configuration modal.
+- [x] 4.5 Fix timer state logic so the timer increments from 00:00 (or decrements from a positive value) instead of showing negative numbers.
+- [x] 4.6 Fix pause button logic to persist current timer state instead of resetting it.
+- [x] 4.7 Hook up the "Pomodoro" button to initiate the configured Focus and Break time sequence.

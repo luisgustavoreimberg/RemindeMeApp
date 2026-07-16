@@ -36,4 +36,14 @@ public class TimerSession
     /// Expected duration in seconds (applicable for Pomodoro).
     /// </summary>
     public int? DuracaoEsperadaSegundos { get; set; }
+
+    /// <summary>
+    /// Indicates whether the session is currently paused.
+    /// </summary>
+    public bool IsPaused { get; set; } = false;
+
+    /// <summary>
+    /// The elapsed time in seconds when the session was paused.
+    /// </summary>
+    public int PausedElapsedSeconds { get; set; } = 0;
 }

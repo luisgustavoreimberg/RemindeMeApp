@@ -13,19 +13,13 @@
         <!-- Context Linker -->
         <div class="w-full max-w-md">
             <label class="block text-label-md font-label-md text-text-secondary mb-2 text-center uppercase tracking-wider">Working On</label>
-            <div class="relative">
-                <select id="task-select" asp-for="SelectedTaskId" class="w-full bg-surface-charcoal border border-border-subtle rounded-lg px-4 py-3 text-body-lg font-body-lg text-on-surface appearance-none focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-center">
-                    <option value="">Select a task...</option>
-                    @foreach (var task in Model.ActiveTasks)
-                    {
-                        <option value="@task.Id">@task.Titulo</option>
-                    }
-                </select>
-                <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
-                <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <span class="w-2.5 h-2.5 rounded-full bg-tag-work block"></span>
-                </div>
-            </div>
+            <select id="task-select" asp-for="SelectedTaskId" class="w-full bg-surface-charcoal border border-border-subtle rounded-lg px-4 py-3 text-body-lg font-body-lg text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-center">
+                <option value="">Select a task...</option>
+                @foreach (var task in Model.ActiveTasks)
+                {
+                    <option value="@task.Id">@task.Titulo</option>
+                }
+            </select>
         </div>
 
         <!-- Main Timer Area -->
@@ -33,7 +27,7 @@
             <!-- Mode Toggle -->
             <div class="absolute top-6 flex bg-surface-container rounded-full p-1 border border-border-subtle">
                 <button class="px-4 py-1.5 rounded-full text-label-md font-label-md bg-surface-variant text-on-surface transition-all">Timer</button>
-                <button class="px-4 py-1.5 rounded-full text-label-md font-label-md text-text-secondary hover:text-on-surface transition-all">Pomodoro</button>
+                <button onclick="startPomodoro()" class="px-4 py-1.5 rounded-full text-label-md font-label-md text-text-secondary hover:text-on-surface transition-all">Pomodoro</button>
             </div>
             
             <!-- Time Display -->
@@ -57,21 +51,41 @@
 
         <!-- Quick Settings Grid -->
         <div class="grid grid-cols-2 gap-4 w-full max-w-md">
-            <div class="bg-surface-charcoal border border-border-subtle rounded-xl p-4 flex flex-col items-center hover:border-primary/50 transition-colors group cursor-pointer">
+            <div class="bg-surface-charcoal border border-border-subtle rounded-xl p-4 flex flex-col items-center hover:border-primary/50 transition-colors group cursor-pointer" onclick="openConfigModal()">
                 <span class="text-caption font-caption text-text-secondary mb-1">Focus Time</span>
                 <div class="flex items-baseline gap-1">
-                    <span class="text-headline-lg font-headline-lg text-on-surface group-hover:text-primary transition-colors">25</span>
+                    <span id="display-focus" class="text-headline-lg font-headline-lg text-on-surface group-hover:text-primary transition-colors">25</span>
                     <span class="text-body-md font-body-md text-text-secondary">min</span>
                 </div>
             </div>
-            <div class="bg-surface-charcoal border border-border-subtle rounded-xl p-4 flex flex-col items-center hover:border-primary/50 transition-colors group cursor-pointer">
+            <div class="bg-surface-charcoal border border-border-subtle rounded-xl p-4 flex flex-col items-center hover:border-primary/50 transition-colors group cursor-pointer" onclick="openConfigModal()">
                 <span class="text-caption font-caption text-text-secondary mb-1">Break Time</span>
                 <div class="flex items-baseline gap-1">
-                    <span class="text-headline-lg font-headline-lg text-on-surface group-hover:text-primary transition-colors">05</span>
+                    <span id="display-break" class="text-headline-lg font-headline-lg text-on-surface group-hover:text-primary transition-colors">05</span>
                     <span class="text-body-md font-body-md text-text-secondary">min</span>
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<dialog id="config-modal" class="bg-surface-container rounded-xl p-6 text-on-surface border border-border-subtle shadow-2xl backdrop:bg-black/50 w-full max-w-sm">
+    <h2 class="text-headline-md font-bold mb-4">Timer Settings</h2>
+    <div class="space-y-4">
+        <div>
+            <label class="block text-body-md text-text-secondary mb-1">Focus Time (minutes)</label>
+            <input type="number" id="input-focus" value="25" min="1" max="120" class="w-full bg-surface-charcoal border border-border-subtle rounded-md p-2 text-on-surface focus:border-primary outline-none" />
+        </div>
+        <div>
+            <label class="block text-body-md text-text-secondary mb-1">Break Time (minutes)</label>
+            <input type="number" id="input-break" value="5" min="1" max="60" class="w-full bg-surface-charcoal border border-border-subtle rounded-md p-2 text-on-surface focus:border-primary outline-none" />
+        </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-6">
+        <button type="button" class="px-4 py-2 text-on-surface-variant hover:bg-surface-variant rounded-md" onclick="document.getElementById('config-modal').close()">Cancel</button>
+        <button type="button" class="px-4 py-2 bg-primary text-on-primary font-medium rounded-md hover:bg-primary-fixed" onclick="saveConfig()">Save</button>
+    </div>
+</dialog>
     </div>
 </div>
 
@@ -97,9 +111,14 @@
                 if (response.ok) {
                     const data = await response.json();
                     if (data.isActive) {
-                        document.getElementById('clock-display').textContent = formatTime(data.elapsedSeconds);
-                        isRunning = true;
-                        document.getElementById('play-icon').textContent = 'pause';
+                        const timeToFormat = data.isPomodoro ? data.remainingSeconds : data.elapsedSeconds;
+                        document.getElementById('clock-display').textContent = formatTime(timeToFormat);
+                        isRunning = !data.isPaused;
+                        document.getElementById('play-icon').textContent = data.isPaused ? 'play_arrow' : 'pause';
+                        
+                        if (data.isPomodoro && data.remainingSeconds <= 0) {
+                            startBreak();
+                        }
                     } else {
                         isRunning = false;
                         document.getElementById('play-icon').textContent = 'play_arrow';
@@ -113,22 +132,48 @@
 
         async function toggleTimer() {
             const taskId = document.getElementById('task-select').value;
-            if (!taskId && !isRunning) {
-                alert("Please select a task first.");
-                return;
+            if (!taskId && !isRunning && document.getElementById('play-icon').textContent === 'play_arrow') {
+                // If it's paused, it's ok, but if it's new, we need a task
+                const isPaused = document.getElementById('clock-display').textContent !== '00:00';
+                if (!isPaused) {
+                    alert("Please select a task first.");
+                    return;
+                }
             }
 
             if (isRunning) {
-                // For simplicity here we just stop it when paused, but a real app would support pause
-                await stopTimer();
+                try {
+                    const response = await fetchWithAntiForgery(`?handler=PauseTimer`, { method: 'POST' });
+                    if (response.ok) {
+                        isRunning = false;
+                        document.getElementById('play-icon').textContent = 'play_arrow';
+                        syncClock();
+                    }
+                } catch(e) {
+                    console.error(e);
+                }
             } else {
                 try {
-                    const response = await fetchWithAntiForgery(`?handler=StartTimer&taskId=${taskId}`, { method: 'POST' });
-                    if (response.ok) {
-                        isRunning = true;
-                        document.getElementById('play-icon').textContent = 'pause';
-                        syncInterval = setInterval(syncClock, 1000);
-                        syncClock();
+                    // Check if it's a resume or start
+                    const clockContent = document.getElementById('clock-display').textContent;
+                    if (clockContent !== '00:00' && clockContent !== formatTime(focusTime * 60)) {
+                        // Resume
+                        const response = await fetchWithAntiForgery(`?handler=ResumeTimer`, { method: 'POST' });
+                        if (response.ok) {
+                            isRunning = true;
+                            document.getElementById('play-icon').textContent = 'pause';
+                            syncClock();
+                            if(!syncInterval) syncInterval = setInterval(syncClock, 1000);
+                        }
+                    } else {
+                        // Start
+                        const response = await fetchWithAntiForgery(`?handler=StartTimer&taskId=${taskId}`, { method: 'POST' });
+                        if (response.ok) {
+                            isRunning = true;
+                            document.getElementById('play-icon').textContent = 'pause';
+                            syncClock();
+                            if(!syncInterval) syncInterval = setInterval(syncClock, 1000);
+                        }
                     }
                 } catch(e) {
                     console.error(e);
@@ -143,7 +188,7 @@
                     isRunning = false;
                     document.getElementById('play-icon').textContent = 'play_arrow';
                     if(syncInterval) clearInterval(syncInterval);
-                    document.getElementById('clock-display').textContent = "00:00";
+                    // document.getElementById('clock-display').textContent = "00:00"; // Persist state visually
                 }
             } catch(e) {
                 console.error(e);
@@ -155,29 +200,68 @@
             syncClock();
         }
 
-        // Ambient interaction
-        const timerContainer = document.querySelector('.glass-panel');
-        if(timerContainer) {
-            document.addEventListener('mousemove', (e) => {
-                const { clientX, clientY } = e;
-                const { left, top, width, height } = timerContainer.getBoundingClientRect();
-                const centerX = left + width / 2;
-                const centerY = top + height / 2;
-                
-                const deltaX = (clientX - centerX) / 40;
-                const deltaY = (clientY - centerY) / 40;
-                
-                timerContainer.style.transform = `perspective(1000px) rotateY(${deltaX}deg) rotateX(${-deltaY}deg)`;
-            });
 
-            timerContainer.addEventListener('mouseleave', () => {
-                timerContainer.style.transform = `perspective(1000px) rotateY(0deg) rotateX(0deg)`;
-                timerContainer.style.transition = 'transform 0.5s ease';
-            });
-            
-            timerContainer.addEventListener('mouseenter', () => {
-                timerContainer.style.transition = 'none';
-            });
+        async function startPomodoro() {
+            const taskId = document.getElementById('task-select').value;
+            if (!taskId) {
+                alert("Please select a task first to start a Pomodoro.");
+                return;
+            }
+
+            if (isRunning) {
+                await stopTimer();
+            }
+
+            try {
+                const durationSeconds = focusTime * 60;
+                const response = await fetchWithAntiForgery(`?handler=StartPomodoro&taskId=${taskId}&durationSeconds=${durationSeconds}`, { method: 'POST' });
+                if (response.ok) {
+                    isRunning = true;
+                    document.getElementById('play-icon').textContent = 'pause';
+                    document.getElementById('clock-display').textContent = formatTime(durationSeconds);
+                    if(!syncInterval) syncInterval = setInterval(syncClock, 1000);
+                    syncClock();
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        async function startBreak() {
+            if (isRunning) {
+                await stopTimer();
+            }
+
+            try {
+                const durationSeconds = breakTime * 60;
+                const response = await fetchWithAntiForgery(`?handler=StartBreak&durationSeconds=${durationSeconds}`, { method: 'POST' });
+                if (response.ok) {
+                    isRunning = true;
+                    document.getElementById('play-icon').textContent = 'pause';
+                    document.getElementById('clock-display').textContent = formatTime(durationSeconds);
+                    if(!syncInterval) syncInterval = setInterval(syncClock, 1000);
+                    syncClock();
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        let focusTime = 25;
+        let breakTime = 5;
+
+        function openConfigModal() {
+            document.getElementById('input-focus').value = focusTime;
+            document.getElementById('input-break').value = breakTime;
+            document.getElementById('config-modal').showModal();
+        }
+
+        function saveConfig() {
+            focusTime = document.getElementById('input-focus').value;
+            breakTime = document.getElementById('input-break').value;
+            document.getElementById('display-focus').textContent = focusTime.toString().padStart(2, '0');
+            document.getElementById('display-break').textContent = breakTime.toString().padStart(2, '0');
+            document.getElementById('config-modal').close();
         }
     </script>
 }
