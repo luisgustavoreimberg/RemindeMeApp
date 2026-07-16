@@ -119,10 +119,15 @@ public class TaskService : ITaskService
 
             if (!task.IsAtivo)
             {
+                task.DataHoraFinalizacao = DateTime.Now;
                 foreach (var subtask in task.Subtasks)
                 {
                     subtask.IsAtivo = false;
                 }
+            }
+            else
+            {
+                task.DataHoraFinalizacao = null;
             }
 
             await _dbContext.SaveChangesAsync();
@@ -138,6 +143,7 @@ public class TaskService : ITaskService
         if (task != null && task.IsAtivo)
         {
             task.IsAtivo = false;
+            task.DataHoraFinalizacao = DateTime.Now;
             foreach (var subtask in task.Subtasks)
             {
                 subtask.IsAtivo = false;

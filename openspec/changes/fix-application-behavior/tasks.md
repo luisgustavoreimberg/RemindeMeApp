@@ -8,12 +8,12 @@
 - [x] 2.2 Implement navigation or click handlers for the "Settings" sidebar menu item.
 
 ## 3. Dashboard Features
-- [ ] 3.1 Implement tag/task filtering logic (Name, Elapsed Time, Completion Date) in the dashboard component state.
-- [ ] 3.2 Implement tag/task sorting logic (Alphabetical, Completion Date, Elapsed Time) in the dashboard component state.
-- [ ] 3.3 Add click events to the date and tag icons in the Quick Task input to open their respective selection popups.
-- [ ] 3.4 Create an Edit Task view/modal and connect it to existing tasks in the dashboard.
-- [ ] 3.5 Implement UI and logic to create subtasks from a parent task.
-- [ ] 3.6 Update the dashboard task list to render subtasks hierarchically under their parent tasks.
+- [x] 3.1 Implement tag/task filtering logic (Name, Elapsed Time, Completion Date) in the dashboard component state.
+- [x] 3.2 Implement tag/task sorting logic (Alphabetical, Completion Date, Elapsed Time) in the dashboard component state.
+- [x] 3.3 Add click events to the date and tag icons in the Quick Task input to open their respective selection popups.
+- [x] 3.4 Create an Edit Task view/modal and connect it to existing tasks in the dashboard.
+- [x] 3.5 Implement UI and logic to create subtasks from a parent task.
+- [x] 3.6 Update the dashboard task list to render subtasks hierarchically under their parent tasks.
 
 ## 4. Focus Mode Mechanics
 - [ ] 4.1 Update CSS for the time panel's glass div to remove hover movement/animations.

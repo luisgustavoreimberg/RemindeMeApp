@@ -51,4 +51,26 @@ public class IndexModel : PageModel
         
         return RedirectToPage();
     }
+
+    public async Task<IActionResult> OnPostEditTaskAsync(int id, string title)
+    {
+        var task = await _taskService.GetByIdAsync(id);
+        if (task != null && !string.IsNullOrWhiteSpace(title))
+        {
+            task.Titulo = title;
+            await _taskService.UpdateAsync(task);
+        }
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostAddSubtaskAsync(int parentId, string title)
+    {
+        var task = await _taskService.GetByIdAsync(parentId);
+        if (task != null && !string.IsNullOrWhiteSpace(title))
+        {
+            task.Subtasks.Add(new Subtask { Titulo = title, IsAtivo = true });
+            await _taskService.UpdateAsync(task);
+        }
+        return RedirectToPage();
+    }
 }

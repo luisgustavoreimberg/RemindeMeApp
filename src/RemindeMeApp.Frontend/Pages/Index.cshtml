@@ -10,13 +10,17 @@
         <h1 class="text-display font-display text-on-surface">Today's Tasks</h1>
         <p class="text-body-md font-body-md text-text-secondary mt-1">@DateTime.Now.ToString("dddd, MMMM dd")</p>
     </div>
-    <div class="flex gap-2">
-        <button class="p-2 rounded-md border border-border-subtle text-on-surface-variant hover:bg-surface-variant/50 transition-colors">
-            <span class="material-symbols-outlined">filter_list</span>
-        </button>
-        <button class="p-2 rounded-md border border-border-subtle text-on-surface-variant hover:bg-surface-variant/50 transition-colors">
-            <span class="material-symbols-outlined">sort</span>
-        </button>
+    <div class="flex gap-2 items-center">
+        <input type="text" id="filter-name" placeholder="Filter by name..." class="p-2 rounded-md border border-border-subtle bg-surface-charcoal text-on-surface text-sm focus:border-primary outline-none" onkeyup="applyFiltersAndSort()" />
+        <select id="sort-order" class="p-2 rounded-md border border-border-subtle bg-surface-charcoal text-on-surface text-sm focus:border-primary outline-none" onchange="applyFiltersAndSort()">
+            <option value="default">Sort by...</option>
+            <option value="alpha-asc">Alphabetical (A-Z)</option>
+            <option value="alpha-desc">Alphabetical (Z-A)</option>
+            <option value="time-desc">Elapsed Time (Highest)</option>
+            <option value="time-asc">Elapsed Time (Lowest)</option>
+            <option value="date-desc">Completion Date (Newest)</option>
+            <option value="date-asc">Completion Date (Oldest)</option>
+        </select>
     </div>
 </div>
 
@@ -29,7 +33,10 @@
         var icon = task.IsAtivo ? "radio_button_unchecked" : "check_circle";
         var textStyle = task.IsAtivo ? "text-on-surface font-medium" : "text-text-secondary line-through";
 
-        <div class="group bg-surface-charcoal border @borderColor rounded-lg p-0 flex flex-col shadow-lg shadow-primary/5 transition-all relative overflow-hidden @isCompletedClass">
+        <div class="task-item group bg-surface-charcoal border @borderColor rounded-lg p-0 flex flex-col shadow-lg shadow-primary/5 transition-all relative overflow-hidden @isCompletedClass"
+             data-title="@task.Titulo"
+             data-time="@task.TempoTotalGastoSegundos"
+             data-date="@(task.DataHoraFinalizacao?.ToString("o") ?? "")">
             @if (task.IsAtivo)
             {
                 <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
@@ -56,40 +63,41 @@
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="flex items-center gap-2 bg-surface-container-highest px-3 py-1.5 rounded-md border border-border-subtle opacity-60 group-hover:opacity-100 transition-opacity">
-                        <span class="text-label-md font-label-md text-text-secondary tabular-nums">@TimeSpan.FromSeconds(task.TempoTotalGastoSegundos).ToString(@"hh\:mm\:ss")</span>
+                        <button type="button" class="text-text-secondary hover:text-primary transition-colors flex items-center" onclick="openSubtaskModal(@task.Id); event.stopPropagation();" title="Add Subtask">
+                            <span class="material-symbols-outlined text-sm">add_task</span>
+                        </button>
+                        <button type="button" class="text-text-secondary hover:text-primary transition-colors flex items-center" onclick="openEditModal(@task.Id, '@task.Titulo.Replace("'", "\\'")'); event.stopPropagation();" title="Edit Task">
+                            <span class="material-symbols-outlined text-sm">edit</span>
+                        </button>
+                        <span class="text-label-md font-label-md text-text-secondary tabular-nums border-l border-border-subtle pl-2">@TimeSpan.FromSeconds(task.TempoTotalGastoSegundos).ToString(@"hh\:mm\:ss")</span>
                         <a href="/Focus" class="text-text-secondary hover:text-primary transition-colors flex items-center">
                             <span class="material-symbols-outlined">play_circle</span>
                         </a>
                     </div>
-                    @if (task.Subtasks.Any())
-                    {
+
                         <button class="text-on-surface-variant hover:text-on-surface transition-colors transform group-hover:rotate-180 duration-300" onclick="toggleSubtasks('task-@task.Id')">
                             <span class="material-symbols-outlined" id="icon-task-@task.Id">expand_more</span>
                         </button>
-                    }
                 </div>
             </div>
 
             <!-- Subtasks (Collapsed by default) -->
-            @if (task.Subtasks.Any())
-            {
-                <div class="bg-surface-container-low border-t border-border-subtle p-4 pl-12 space-y-3 hidden" id="task-@task.Id-subtasks">
-                    @foreach(var sub in task.Subtasks)
-                    {
-                        <div class="flex items-center gap-3">
-                            <button class="text-outline hover:text-primary transition-colors focus:outline-none">
-                                <span class="material-symbols-outlined text-xl">@(sub.IsAtivo ? "radio_button_unchecked" : "check_circle")</span>
-                            </button>
-                            <span class="text-body-md font-body-md @(sub.IsAtivo ? "text-on-surface-variant" : "text-text-secondary line-through")">@sub.Titulo</span>
-                        </div>
-                    }
-                    <div class="flex items-center gap-3 mt-2">
-                        <button class="text-text-secondary hover:text-primary text-body-md font-body-md flex items-center gap-1 transition-colors">
-                            <span class="material-symbols-outlined text-sm">add</span> Add subtask
+            <div class="bg-surface-container-low border-t border-border-subtle p-4 pl-12 space-y-3 hidden" id="task-@task.Id-subtasks">
+                @foreach(var sub in task.Subtasks)
+                {
+                    <div class="flex items-center gap-3">
+                        <button class="text-outline hover:text-primary transition-colors focus:outline-none">
+                            <span class="material-symbols-outlined text-xl">@(sub.IsAtivo ? "radio_button_unchecked" : "check_circle")</span>
                         </button>
+                        <span class="text-body-md font-body-md @(sub.IsAtivo ? "text-on-surface-variant" : "text-text-secondary line-through")">@sub.Titulo</span>
                     </div>
+                }
+                <div class="flex items-center gap-3 mt-2">
+                    <button class="text-text-secondary hover:text-primary text-body-md font-body-md flex items-center gap-1 transition-colors" onclick="openSubtaskModal(@task.Id)">
+                        <span class="material-symbols-outlined text-sm">add</span> Add subtask
+                    </button>
                 </div>
-            }
+            </div>
         </div>
     }
 
@@ -141,5 +149,85 @@
                 console.error("Failed to toggle task", e);
             }
         }
+        function applyFiltersAndSort() {
+            const filterName = document.getElementById('filter-name').value.toLowerCase();
+            const sortOrder = document.getElementById('sort-order').value;
+            const container = document.getElementById('task-container');
+            
+            let items = Array.from(container.querySelectorAll('.task-item'));
+
+            if (sortOrder !== 'default') {
+                items.sort((a, b) => {
+                    if (sortOrder === 'alpha-asc' || sortOrder === 'alpha-desc') {
+                        const tA = a.getAttribute('data-title').toLowerCase();
+                        const tB = b.getAttribute('data-title').toLowerCase();
+                        if (tA < tB) return sortOrder === 'alpha-asc' ? -1 : 1;
+                        if (tA > tB) return sortOrder === 'alpha-asc' ? 1 : -1;
+                        return 0;
+                    }
+                    if (sortOrder === 'time-asc' || sortOrder === 'time-desc') {
+                        const timeA = parseInt(a.getAttribute('data-time')) || 0;
+                        const timeB = parseInt(b.getAttribute('data-time')) || 0;
+                        return sortOrder === 'time-asc' ? timeA - timeB : timeB - timeA;
+                    }
+                    if (sortOrder === 'date-asc' || sortOrder === 'date-desc') {
+                        const dateA = a.getAttribute('data-date') ? new Date(a.getAttribute('data-date')).getTime() : 0;
+                        const dateB = b.getAttribute('data-date') ? new Date(b.getAttribute('data-date')).getTime() : 0;
+                        return sortOrder === 'date-asc' ? dateA - dateB : dateB - dateA;
+                    }
+                    return 0;
+                });
+            }
+
+            items.forEach(item => {
+                const title = item.getAttribute('data-title').toLowerCase();
+                const show = title.includes(filterName);
+                item.style.display = show ? '' : 'none';
+                container.appendChild(item);
+            });
+        }
+
+        function openEditModal(taskId, title) {
+            document.getElementById('edit-task-id').value = taskId;
+            document.getElementById('edit-task-title').value = title;
+            document.getElementById('edit-modal').showModal();
+        }
+
+        function openSubtaskModal(taskId) {
+            document.getElementById('subtask-parent-id').value = taskId;
+            document.getElementById('subtask-modal').showModal();
+        }
+
+        function openDatePopup() {
+            alert('Date selection coming soon');
+        }
+
+        function openTagPopup() {
+            alert('Tag selection coming soon');
+        }
     </script>
+
+    <dialog id="edit-modal" class="bg-surface-container rounded-xl p-6 text-on-surface border border-border-subtle shadow-2xl backdrop:bg-black/50 w-full max-w-md">
+        <h2 class="text-headline-md font-bold mb-4">Edit Task</h2>
+        <form method="post" asp-page-handler="EditTask">
+            <input type="hidden" name="id" id="edit-task-id" />
+            <input type="text" name="title" id="edit-task-title" class="w-full bg-surface-charcoal border border-border-subtle rounded-md p-2 mb-4 text-on-surface focus:border-primary outline-none" />
+            <div class="flex justify-end gap-2">
+                <button type="button" class="px-4 py-2 text-on-surface-variant hover:bg-surface-variant rounded-md" onclick="document.getElementById('edit-modal').close()">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-primary text-on-primary font-medium rounded-md hover:bg-primary-fixed">Save</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="subtask-modal" class="bg-surface-container rounded-xl p-6 text-on-surface border border-border-subtle shadow-2xl backdrop:bg-black/50 w-full max-w-md">
+        <h2 class="text-headline-md font-bold mb-4">Add Subtask</h2>
+        <form method="post" asp-page-handler="AddSubtask">
+            <input type="hidden" name="parentId" id="subtask-parent-id" />
+            <input type="text" name="title" placeholder="Subtask title" class="w-full bg-surface-charcoal border border-border-subtle rounded-md p-2 mb-4 text-on-surface focus:border-primary outline-none" required />
+            <div class="flex justify-end gap-2">
+                <button type="button" class="px-4 py-2 text-on-surface-variant hover:bg-surface-variant rounded-md" onclick="document.getElementById('subtask-modal').close()">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-primary text-on-primary font-medium rounded-md hover:bg-primary-fixed">Add</button>
+            </div>
+        </form>
+    </dialog>
 }

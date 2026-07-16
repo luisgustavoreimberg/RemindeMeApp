@@ -34,6 +34,11 @@ public class TaskItem
     public bool IsAtivo { get; set; } = true;
 
     /// <summary>
+    /// The date and time when the task was completed.
+    /// </summary>
+    public DateTime? DataHoraFinalizacao { get; set; }
+
+    /// <summary>
     /// The optional associated tag identifier.
     /// </summary>
     public int? TagId { get; set; }
