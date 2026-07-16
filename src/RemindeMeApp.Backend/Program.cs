@@ -26,6 +26,7 @@ class Program
             .SetTitle("RemindeMeApp")
             .SetUseOsDefaultSize(false)
             .SetSize(1024, 768)
+            .SetMinSize(800, 600)
             .Center();
 
         window.WindowClosing += (sender, e) =>
